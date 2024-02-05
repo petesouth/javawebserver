@@ -3,8 +3,8 @@
 # Default Maven download URL
 MVN_TAR_URL="https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz"
 
-# Default Maven home directory
-MAVEN_HOME="$HOME/maven"
+# Default Maven home parent directory
+MAVEN_PARENT_DIR="$HOME/maven"
 
 # Help message
 show_help() {
@@ -27,20 +27,20 @@ do
         shift # Remove argument from processing
         ;;
         maven_home=*)
-        MAVEN_HOME="${arg#*=}"
+        MAVEN_PARENT_DIR="${arg#*=}"
         shift # Remove argument from processing
         ;;
     esac
 done
 
 # Create the target directory
-mkdir -p $MAVEN_HOME
+mkdir -p $MAVEN_PARENT_DIR
 
 # Download Maven from Apache
-wget -c "$MVN_TAR_URL" -O $MAVEN_HOME/maven.tar.gz
+wget -c "$MVN_TAR_URL" -O $MAVEN_PARENT_DIR/maven.tar.gz
 
 # Navigate to the target directory
-cd $MAVEN_HOME
+cd $MAVEN_PARENT_DIR
 
 # Extract the downloaded tar.gz file
 tar -zxvf maven.tar.gz
@@ -51,9 +51,12 @@ rm maven.tar.gz
 # Find the Maven directory name (it should start with 'apache-maven-')
 mvn_dir=$(find . -maxdepth 1 -type d -name "apache-maven-*" -printf "%f\n")
 
+# Full path to the Maven directory
+MAVEN_HOME="$MAVEN_PARENT_DIR/$mvn_dir"
+
 # Setup M2_HOME and PATH
-echo "Setting up M2_HOME to $MAVEN_HOME/$mvn_dir"
-export M2_HOME=$MAVEN_HOME/$mvn_dir
+echo "Setting up M2_HOME to $MAVEN_HOME"
+export M2_HOME=$MAVEN_HOME
 export PATH=$M2_HOME/bin:$PATH
 
 # Print M2_HOME and PATH
