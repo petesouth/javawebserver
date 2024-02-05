@@ -1,0 +1,65 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>
+		4.0.0
+	</modelVersion>
+	<parent>
+		<groupId>
+			com.shyhumangames.app
+		</groupId>
+		<artifactId>
+			shyhumangames
+		</artifactId>
+		<version>
+			1.0.0
+		</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+	<artifactId>
+		javawebserver
+	</artifactId>
+	<version>
+		1.0.0
+	</version>
+	<packaging>
+		jar
+	</packaging>
+	<dependencies>
+		<!-- Add your dependencies here -->
+		<dependency>
+			<groupId>
+				junit
+			</groupId>
+			<artifactId>
+				junit
+			</artifactId>
+			<version>
+				4.11
+			</version>
+			<scope>
+				
+			</scope>
+		</dependency>
+		<!-- Add more dependencies as needed -->
+	</dependencies>
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>
+					maven-compiler-plugin
+				</artifactId>
+				<version>
+					3.8.1
+				</version>
+				<!-- Ensure you are using a version that supports modules -->
+				<configuration>
+					<release>
+					17
+					</release>
+					<!-- or whichever version you are using -->
+				</configuration>
+			</plugin>
+			
+
+		</plugins>
+	</build>
+</project>
