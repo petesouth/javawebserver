@@ -1,5 +1,9 @@
 package com.shyhumangames.app;
 
+
+import com.shyhumangames.app.javawebserver.configuration.AppConfig;
+
+
 /**
  * Hello world!
  *
@@ -7,7 +11,12 @@ package com.shyhumangames.app;
 public class App 
 {
     public static void main( String[] args )
-    {
-        System.out.println( "Hello World!" );
+    {   
+        int server_port = AppConfig.getJavaWebServerAppConfig().getWebServerPort();
+        String server_ip = AppConfig.getJavaWebServerAppConfig().getWebServerIp();
+        
+        System.out.println( "Runnning JavaWebServer with Configuration server_ip: " + 
+                            server_ip + 
+                            " server_port: " + server_port);
     }
 }
