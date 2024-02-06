@@ -22,7 +22,7 @@ public class AppConfig {
     private static final String JAVAWEBSERVER_PROPERTIES = "javawebserver.properties";
     private static AppConfig appConfig = null;
 
-    public static AppConfig getJavaWebServerAppConfig() {
+    public static AppConfig getAppConfig() {
         if( AppConfig.appConfig == null) {
             AppConfig.appConfig = new AppConfig(AppConfig.JAVAWEBSERVER_PROPERTIES);
         }
@@ -51,7 +51,6 @@ public class AppConfig {
                                      ". Ensure the file is in the classpath.");
         }
     }
-    
 
     public String getProperty(String key) {
         return properties.getProperty(key);

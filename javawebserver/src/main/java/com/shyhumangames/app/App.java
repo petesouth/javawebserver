@@ -1,8 +1,11 @@
 package com.shyhumangames.app;
 
 
-import com.shyhumangames.app.javawebserver.configuration.AppConfig;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
+import com.shyhumangames.app.javawebserver.configuration.AppConfig;
+import com.shyhumangames.app.javawebserver.server.WebServer;
 
 /**
  * Hello world!
@@ -10,13 +13,24 @@ import com.shyhumangames.app.javawebserver.configuration.AppConfig;
  */
 public class App 
 {
+    private static final Logger LOGGER = Logger.getLogger(App.class.getName());
+    
     public static void main( String[] args )
     {   
-        int server_port = AppConfig.getJavaWebServerAppConfig().getWebServerPort();
-        String server_ip = AppConfig.getJavaWebServerAppConfig().getWebServerIp();
+        try {
+            int server_port = AppConfig.getAppConfig().getWebServerPort();
+            String server_ip = AppConfig.getAppConfig().getWebServerIp();
+            
+            WebServer webServer = new WebServer(server_ip, server_port);            
+            webServer.run();
+    
+        } catch(Throwable t) {
+            App.LOGGER.warning("Error occured when trying to run the WebServer: " + 
+                                t.getClass().getName() + 
+                                " error: " + 
+                                t.getMessage());    
+        }
         
-        System.out.println( "Runnning JavaWebServer with Configuration server_ip: " + 
-                            server_ip + 
-                            " server_port: " + server_port);
+        App.LOGGER.info( "Good Bye");
     }
 }
