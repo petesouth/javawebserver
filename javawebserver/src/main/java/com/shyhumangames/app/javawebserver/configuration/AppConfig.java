@@ -12,13 +12,16 @@ public class AppConfig {
     private static final Logger LOGGER = Logger.getLogger(AppConfig.class.getName());
     
 
-    private static final String LOGGING_LEVEL = "logging_level";
-    private static final String WEB_SERVER_IP = "web_server_ip";
-    private static final String WEB_SERVER_PORT = "web_server_port";
-    private static final String DEFAULT_WEB_SERVER_IP = "0.0.0.0";
-    private static final String DEFAULT_WEB_SERVER_PORT = "8080";
-    private static final String JAVAWEBSERVER_PROPERTIES = "javawebserver.properties";
-    private static AppConfig appConfig = null;
+    public static final String LOGGING_LEVEL = "logging_level";
+    public static final String WEB_SERVER_IP = "web_server_ip";
+    public static final String WEB_SERVER_PORT = "web_server_port";
+    public static final String NUMBER_OF_THREADS_PARAM = "numberOfThreads";
+    public static final String DEFAULT_WEB_SERVER_IP = "0.0.0.0";
+    public static final int DEFAULT_WEB_SERVER_PORT_NUMBER = 8080;
+    public static final int DEFAULT_THREAD_POOL_SIZE_NUMBER = 10;
+
+    public static final String JAVAWEBSERVER_PROPERTIES = "javawebserver.properties";
+    public static AppConfig appConfig = null;
 
     public static AppConfig getAppConfig() {
         if( AppConfig.appConfig == null) {
@@ -54,10 +57,19 @@ public class AppConfig {
         return properties.getProperty(key);
     }
 
+    public int getNumberOfThreads() throws NumberFormatException {
+        String numberOfThreadsStr = this.getProperty(NUMBER_OF_THREADS_PARAM);
+        if( numberOfThreadsStr == null || numberOfThreadsStr.length() < 1 ) {
+            numberOfThreadsStr = "" + AppConfig.DEFAULT_THREAD_POOL_SIZE_NUMBER;
+            this.properties.setProperty(NUMBER_OF_THREADS_PARAM, numberOfThreadsStr);
+        }
+        return Integer.valueOf(numberOfThreadsStr).intValue();
+    }
+
     public int getWebServerPort() throws NumberFormatException {
         String portStr = this.getProperty(WEB_SERVER_PORT);
         if( portStr == null || portStr.length() < 1 ) {
-            portStr = AppConfig.DEFAULT_WEB_SERVER_PORT;
+            portStr = "" + AppConfig.DEFAULT_WEB_SERVER_PORT_NUMBER;
             this.properties.setProperty(WEB_SERVER_PORT, portStr);
         }
         return Integer.valueOf(portStr).intValue();

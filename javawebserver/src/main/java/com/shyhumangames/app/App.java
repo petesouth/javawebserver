@@ -2,7 +2,6 @@ package com.shyhumangames.app;
 
 
 import java.util.logging.Logger;
-import java.util.logging.Level;
 
 import com.shyhumangames.app.javawebserver.configuration.AppConfig;
 import com.shyhumangames.app.javawebserver.server.WebServer;
@@ -20,8 +19,9 @@ public class App
         try {
             int server_port = AppConfig.getAppConfig().getWebServerPort();
             String server_ip = AppConfig.getAppConfig().getWebServerIp();
-            
-            WebServer webServer = new WebServer(server_ip, server_port);            
+            int numberOfThreads = AppConfig.getAppConfig().getNumberOfThreads();
+
+            WebServer webServer = new WebServer(server_ip, server_port, numberOfThreads);            
             webServer.run();
     
         } catch(Throwable t) {
