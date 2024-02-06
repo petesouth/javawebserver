@@ -1,4 +1,4 @@
-package com.shyhumangames.app.javawebserver.routes.players;
+package com.shyhumangames.app.javawebserver.routes.ticket;
 
 import java.io.IOException;
 import java.io.OutputStream;
