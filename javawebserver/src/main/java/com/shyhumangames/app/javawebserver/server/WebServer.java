@@ -1,7 +1,6 @@
 package com.shyhumangames.app.javawebserver.server;
 
 import java.util.logging.Logger;
-import java.util.logging.Level;
 
 public class WebServer {
     
@@ -18,7 +17,6 @@ public class WebServer {
     
 
     public void run() {
-        // A flag to control the loop. It's volatile to ensure visibility between threads.
         this.running = true;
 
         // Add shutdown hook to handle CTRL-C or other interrupt signals.
