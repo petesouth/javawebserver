@@ -1,11 +1,16 @@
 package com.shyhumangames.app.javawebserver.server;
 
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+
 
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
@@ -18,7 +23,6 @@ import com.shyhumangames.app.javawebserver.configuration.AppConfig;
 
 public class WebServer {
 
-   
     private static final int WAIT_SHUTDOWN_TIMEOUT_SECONDS = 60;
 
     private static final int SERVER_LOOP_DELAY = 10000;
@@ -37,35 +41,38 @@ public class WebServer {
         this.server_ip = AppConfig.DEFAULT_WEB_SERVER_IP;
         this.server_port = AppConfig.DEFAULT_WEB_SERVER_PORT_NUMBER;
         this.numberOfThreads = AppConfig.DEFAULT_THREAD_POOL_SIZE_NUMBER;
-    
+
     }
-    
+
     public WebServer(String server_ip, int server_port) {
         this.server_ip = server_ip;
         this.server_port = server_port;
         this.numberOfThreads = AppConfig.DEFAULT_THREAD_POOL_SIZE_NUMBER;
     }
 
-    public WebServer(String server_ip, int server_port, int numberOfThreads) { 
+    public WebServer(String server_ip, int server_port, int numberOfThreads) {
         this.server_ip = server_ip;
         this.server_port = server_port;
         this.numberOfThreads = numberOfThreads;
     }
 
-    public Map<String, HttpHandlerExt> getRouterHandlerMap() {
+    public Map<Pattern, HttpHandlerExt> getRouterHandlerMap() {
         return this.roterHandler.routeMap;
+    }
+
+    public void addRoute(String path, HttpHandlerExt handler) {
+        this.roterHandler.addRoute(path, handler);
     }
 
     public void run() {
         try {
-            
 
             // Initialize the HTTP server
             InetSocketAddress address = new InetSocketAddress(this.server_ip, this.server_port);
             this.server = HttpServer.create(address, 0);
-            
-            this.getRouterHandlerMap().forEach((String key, HttpHandlerExt handler)->{
-                WebServer.LOGGER.info("Initializing down: " + key);
+
+            this.getRouterHandlerMap().forEach((Pattern key, HttpHandlerExt handler) -> {
+                WebServer.LOGGER.info("Initializing down: " + key.toString());
                 handler.init();
             });
 
@@ -75,7 +82,7 @@ public class WebServer {
 
             // Define contexts and handlers
             this.server.createContext("/", this.roterHandler);
-            
+
             // Add shutdown hook to handle CTRL-C or other interrupt signals.
             this.setupShutdownServerHooks();
 
@@ -95,7 +102,7 @@ public class WebServer {
     }
 
     /**
-     * Sets up a shutdown hook with the runtime so ctrl-c type activity wont 
+     * Sets up a shutdown hook with the runtime so ctrl-c type activity wont
      * leave open connections.
      */
     private void setupShutdownServerHooks() {
@@ -106,68 +113,108 @@ public class WebServer {
 
     public void shutDown() {
         WebServer.LOGGER.info("Shutdown hook running. Cleaning up resources...");
-            server.stop(0);
-            this.running = false;
-            if (!executorService.isShutdown()) {
-                executorService.shutdown(); // Disable new tasks from being submitted
-                try {
-                    // Wait a while for existing tasks to terminate
-                    if (!executorService.awaitTermination(WAIT_SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-                        executorService.shutdownNow(); // Cancel currently executing tasks
-                        // Wait a while for tasks to respond to being cancelled
-                        if (!executorService.awaitTermination(60, TimeUnit.SECONDS))
-                            WebServer.LOGGER.severe("ExecutorService did not terminate");
-                    }
-                } catch (InterruptedException ie) {
-                    // (Re-)Cancel if current thread also interrupted
-                    executorService.shutdownNow();
-                    // Preserve interrupt status
-                    Thread.currentThread().interrupt();
+        server.stop(0);
+        this.running = false;
+        if (!executorService.isShutdown()) {
+            executorService.shutdown(); // Disable new tasks from being submitted
+            try {
+                // Wait a while for existing tasks to terminate
+                if (!executorService.awaitTermination(WAIT_SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                    executorService.shutdownNow(); // Cancel currently executing tasks
+                    // Wait a while for tasks to respond to being cancelled
+                    if (!executorService.awaitTermination(60, TimeUnit.SECONDS))
+                        WebServer.LOGGER.severe("ExecutorService did not terminate");
                 }
+            } catch (InterruptedException ie) {
+                // (Re-)Cancel if current thread also interrupted
+                executorService.shutdownNow();
+                // Preserve interrupt status
+                Thread.currentThread().interrupt();
             }
+        }
 
-            this.getRouterHandlerMap().forEach((String key, HttpHandlerExt handler)->{
-                WebServer.LOGGER.info("Shutting down: " + key);
-                handler.shutdown();
-            });
+        this.getRouterHandlerMap().forEach((Pattern key, HttpHandlerExt handler) -> {
+            WebServer.LOGGER.info("Shutting down: " + key.toString());
+            handler.shutdown();
+        });
     }
 
     static class RouterHandler implements HttpHandler {
-        public Map<String, HttpHandlerExt> routeMap = new LinkedHashMap<String, HttpHandlerExt>();
+        public Map<Pattern, HttpHandlerExt> routeMap = new LinkedHashMap<Pattern, HttpHandlerExt>();
 
         RouterHandler() {
-            this.routeMap.put("/test", new TestHandler());
+            this.addRoute("/test", new TestHandler());
         }
+
+        public void addRoute(String path, HttpHandlerExt handler) {
+            // Convert placeholder-based route pattern to regex pattern
+            String regex = path.replaceAll("\\$\\{[^/]+\\}", "(\\\\w+)");
+            Pattern pattern = Pattern.compile(regex);
+            routeMap.put(pattern, handler);
+            LOGGER.info("Route registered: " + path + " as regex: " + regex);
+        }
+
 
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             String path = exchange.getRequestURI().getPath();
-            HttpHandler handler = this.routeMap.get(path);
-            if( handler != null) {
-                handler.handle(exchange);
+    
+            Optional<Entry<Pattern, HttpHandlerExt>> matchedEntry = routeMap.entrySet().stream()
+                .filter(entry -> entry.getKey().matcher(path).matches())
+                .findFirst();
+    
+            if (matchedEntry.isPresent()) {
+                try {
+                    // Get the handler associated with the matched pattern
+                    HttpHandlerExt handler = matchedEntry.get().getValue();
+                    // Get the Matcher for extracting path parameters if needed
+                    Matcher matcher = matchedEntry.get().getKey().matcher(path);
+                    matcher.matches(); // This is required to prepare the matcher to extract groups
+                    handler.handle(exchange); // Handle the request
+                } catch (Throwable e) {
+                    handleException(path, exchange, e);
+                }
             } else {
-                // If yes, handle the request as before
+                handleNotFound(exchange);
+            }
+        }
+
+        private void handleException(String path, HttpExchange exchange, Throwable e) {
+            try {
+                WebServer.LOGGER.warning("Error while calling handler for:" + path + " :" + e.getMessage());
+                String response = "{ \"status\": 500, \"message\": \"" + e.getMessage() +"\" }";
+                exchange.getResponseHeaders().set("Content-Type", "application/json");
+                exchange.sendResponseHeaders(500, response.length());
+
+                OutputStream os = exchange.getResponseBody();
+                os.write(response.getBytes());
+                os.close();
+            } catch (Throwable t) {
+                WebServer.LOGGER.warning("Error uknown:" + t.getMessage());
+            }
+        }
+    
+        private void handleNotFound(HttpExchange exchange) {
+            try {
                 String response = "{ \"status\": 404, \"message\": \"Not Found\" }";
                 exchange.getResponseHeaders().set("Content-Type", "application/json");
                 exchange.sendResponseHeaders(404, response.length());
-                try (OutputStream os = exchange.getResponseBody()) {
-                    os.write(response.getBytes());
-                    os.close();
-                } catch (Throwable e) {
-                    WebServer.LOGGER.warning("Error path not found:" + path + " :" + e.getMessage());
-                }
-                
-            }  
-            
+                OutputStream os = exchange.getResponseBody();
+                os.write(response.getBytes());
+                os.close();
+            } catch (Throwable e) {
+                WebServer.LOGGER.warning("Error uknown:" + e.getMessage());
+            }
         }
     }
 
     static class TestHandler implements HttpHandlerExt {
-        
+
         @Override
         public void handle(HttpExchange exchange) throws IOException {
-            String response = "{ \"status\": 200, \"message\": \"The Server is up and running\" }";
             exchange.getResponseHeaders().set("Content-Type", "application/json");
+            
+            String response = "{ \"status\": 200, \"message\": \"The Server is up and running\" }";
             exchange.sendResponseHeaders(200, response.length());
             OutputStream os = exchange.getResponseBody();
             os.write(response.getBytes());
@@ -176,12 +223,12 @@ public class WebServer {
 
         @Override
         public void init() {
-        
+
         }
 
         @Override
         public void shutdown() {
-        
+
         }
     }
 }
