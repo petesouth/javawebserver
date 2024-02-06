@@ -30,7 +30,9 @@ public class App
             WebServer webServer = new WebServer(server_ip, server_port, numberOfThreads); 
             
             // Add whatever middleware you'd like
-            // In this case Ill log post and pre for /patients* url
+            
+
+            // GLOBAL ANY URL THAT COMES IN GETS THIS PRE/POST HANDLE
             webServer.addMiddleware(".*", new Middleware() {
 
                 @Override
@@ -47,6 +49,7 @@ public class App
                 
             });
 
+            //    '/players/${id}' ANY URL THAT COMES IN LIKE THIS GETS THIS PRE/POST HANDLE
             webServer.addMiddleware("^/players/\\d+$", new Middleware() {
 
                 @Override
