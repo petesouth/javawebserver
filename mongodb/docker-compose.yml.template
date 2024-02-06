@@ -8,6 +8,4 @@ services:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: abcd1234!
     ports:
-      - "0.0.0.0:27017:27017"
-    volumes:
-      - ./mongo-init:/docker-entrypoint-initdb.d
+      - "your_host_ip:27017:27017"
