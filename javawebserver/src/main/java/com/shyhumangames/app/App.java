@@ -24,7 +24,7 @@ public class App
             WebServer webServer = new WebServer(server_ip, server_port, numberOfThreads); 
             
             // TODO: SET UP WHATEVER ROUTES: 
-            // webServer.getRouterHandlerMap();
+            // webServer.addRoute(String path, HttpHandlerExt handler);
 
             webServer.run();
     
