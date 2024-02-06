@@ -3,14 +3,15 @@ package com.shyhumangames.app.javawebserver.server;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
 
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
@@ -62,6 +63,10 @@ public class WebServer {
 
     public void addRoute(String path, HttpHandlerExt handler) {
         this.roterHandler.addRoute(path, handler);
+    }
+
+    public void addMiddleware(String regex, Middleware middleware) {
+        this.roterHandler.addMiddleware(regex, middleware);
     }
 
     public void run() {
@@ -141,9 +146,16 @@ public class WebServer {
 
     static class RouterHandler implements HttpHandler {
         public Map<Pattern, HttpHandlerExt> routeMap = new LinkedHashMap<Pattern, HttpHandlerExt>();
+        public Map<Pattern, Middleware> middlewareMap = new LinkedHashMap<Pattern, Middleware>();
 
         RouterHandler() {
             this.addRoute("/test", new TestHandler());
+        }
+
+        public void addMiddleware(String regexPattern, Middleware middleware) {
+            Pattern pattern = Pattern.compile(regexPattern);
+            middlewareMap.put(pattern, middleware);
+            LOGGER.info("Middleware registered with regex: " + regexPattern);
         }
 
         public void addRoute(String path, HttpHandlerExt handler) {
@@ -154,19 +166,33 @@ public class WebServer {
             LOGGER.info("Route registered: " + path + " as regex: " + regex);
         }
 
-
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             String path = exchange.getRequestURI().getPath();
-    
-            Optional<Entry<Pattern, HttpHandlerExt>> matchedEntry = routeMap.entrySet().stream()
-                .filter(entry -> entry.getKey().matcher(path).matches())
-                .findFirst();
-    
-            if (matchedEntry.isPresent()) {
+            
+            List<Entry<Pattern, Middleware>> matchedMiddlewareEntry = this.middlewareMap.entrySet().stream()
+                    .filter(entry -> entry.getKey().matcher(path).matches()).toList();
+
+            Optional<Entry<Pattern, HttpHandlerExt>> matchedHandlerEntry = this.routeMap.entrySet().stream()
+                    .filter(entry -> entry.getKey().matcher(path).matches())
+                    .findFirst();
+
+            List<Throwable> errorsPreHandle = new ArrayList<Throwable>();
+            matchedMiddlewareEntry.forEach((Entry<Pattern, Middleware> consumer) -> {
+                try {
+                    consumer.getValue().preHandle(exchange);
+                } catch (Throwable t) {
+                    errorsPreHandle.add(t);
+                }
+
+            });
+
+            if( errorsPreHandle.size() > 0 ) {
+                handleException(path, exchange, errorsPreHandle.get(0));
+            } else if (matchedHandlerEntry.isPresent()) {
                 try {
                     // Get the handler associated with the matched pattern
-                    HttpHandlerExt handler = matchedEntry.get().getValue();
+                    HttpHandlerExt handler = matchedHandlerEntry.get().getValue();
                     handler.handle(exchange); // Handle the request
                 } catch (Throwable e) {
                     handleException(path, exchange, e);
@@ -174,12 +200,28 @@ public class WebServer {
             } else {
                 handleNotFound(exchange);
             }
+
+            List<Throwable> errorsPostHandle = new ArrayList<Throwable>();
+            matchedMiddlewareEntry.forEach((Entry<Pattern, Middleware> consumer) -> {
+                try {
+                    consumer.getValue().postHandle(exchange);
+                } catch (Throwable t) {
+                    errorsPostHandle.add(t);
+                }
+
+            });
+
+            if( errorsPostHandle.size() > 0 ) {
+                handleException(path, exchange, errorsPostHandle.get(0));
+            } 
+
+
         }
 
         private void handleException(String path, HttpExchange exchange, Throwable e) {
             try {
                 WebServer.LOGGER.warning("Error while calling handler for:" + path + " :" + e.getMessage());
-                String response = "{ \"status\": 500, \"message\": \"" + e.getMessage() +"\" }";
+                String response = "{ \"status\": 500, \"message\": \"" + e.getMessage() + "\" }";
                 exchange.getResponseHeaders().set("Content-Type", "application/json");
                 exchange.sendResponseHeaders(500, response.length());
 
@@ -190,7 +232,7 @@ public class WebServer {
                 WebServer.LOGGER.warning("Error uknown:" + t.getMessage());
             }
         }
-    
+
         private void handleNotFound(HttpExchange exchange) {
             try {
                 String response = "{ \"status\": 404, \"message\": \"Not Found\" }";
@@ -206,16 +248,16 @@ public class WebServer {
     }
 
     /**
-     * This is just done to pulse heart beat ok the server.  
+     * This is just done to pulse heart beat ok the server.
      * 
-     *  http://blahblah/test     Show if server is running.
+     * http://blahblah/test Show if server is running.
      */
     static class TestHandler implements HttpHandlerExt {
 
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             exchange.getResponseHeaders().set("Content-Type", "application/json");
-            
+
             String response = "{ \"status\": 200, \"message\": \"The Server is up and running\" }";
             exchange.sendResponseHeaders(200, response.length());
             OutputStream os = exchange.getResponseBody();
