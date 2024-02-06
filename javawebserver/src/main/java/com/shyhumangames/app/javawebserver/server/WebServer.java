@@ -15,7 +15,6 @@ import java.io.OutputStream;
 import java.io.IOException;
 
 import com.shyhumangames.app.javawebserver.configuration.AppConfig;
-import com.shyhumangames.app.javawebserver.server.HttpHandlerExt;
 
 public class WebServer {
 
