@@ -32,6 +32,7 @@ public class WebServer {
     private HttpServer server;
     private boolean running = false;
     private ExecutorService executorService;
+    private RouterHandler roterHandler = new RouterHandler();
 
     public WebServer() {
         this.server_ip = AppConfig.DEFAULT_WEB_SERVER_IP;
@@ -52,9 +53,12 @@ public class WebServer {
         this.numberOfThreads = numberOfThreads;
     }
 
+    public Map<String, HttpHandler> getRouterHandlerMap() {
+        return this.roterHandler.routeMap;
+    }
+
     public void run() {
         try {
-
             
             // Initialize the HTTP server
             InetSocketAddress address = new InetSocketAddress(this.server_ip, this.server_port);
@@ -65,7 +69,7 @@ public class WebServer {
             this.server.setExecutor(this.executorService);
 
             // Define contexts and handlers
-            this.server.createContext("/", new RouterHandler());
+            this.server.createContext("/", this.roterHandler);
             
             // Add shutdown hook to handle CTRL-C or other interrupt signals.
             this.setupShutdownServerHooks();

@@ -21,7 +21,10 @@ public class App
             String server_ip = AppConfig.getAppConfig().getWebServerIp();
             int numberOfThreads = AppConfig.getAppConfig().getNumberOfThreads();
 
-            WebServer webServer = new WebServer(server_ip, server_port, numberOfThreads);            
+            WebServer webServer = new WebServer(server_ip, server_port, numberOfThreads); 
+            // TODO: SET UP WHATEVER ROUTES: 
+            // webServer.getRouterHandlerMap();
+
             webServer.run();
     
         } catch(Throwable t) {
