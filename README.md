@@ -61,4 +61,4 @@ The server supports the following endpoints:
 
 Guidelines for how to contribute to the project.
 
-### TODO:  Add middleware - things like Token Support method logging, etc.
+#### TODO:  Add middleware - things like jwt token support for APIS, method logging, etc.
