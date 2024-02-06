@@ -10,7 +10,7 @@ import com.shyhumangames.app.javawebserver.routes.players.GetPlayersHandler;
 import com.shyhumangames.app.javawebserver.server.WebServer;
 
 /**
- * Hello world!
+ * Runs the JavaWebServer WebServer with configured Routes
  *
  */
 public class App 
@@ -26,10 +26,10 @@ public class App
 
             WebServer webServer = new WebServer(server_ip, server_port, numberOfThreads); 
             
-            // TODO: SET UP WHATEVER ROUTES: 
+            // SET UP WHATEVER ROUTES: 
             webServer.addRoute("/tickets/${id}", new GetTicketsHandler());
             webServer.addRoute("/players/${id}", new GetPlayersHandler());
-            webServer.addRoute("/players/${id}/phones", new GetPhonesHandler());
+            webServer.addRoute("/phones/${id}", new GetPhonesHandler());
 
             webServer.run();
     
