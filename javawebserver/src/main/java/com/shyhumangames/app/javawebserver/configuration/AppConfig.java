@@ -13,6 +13,8 @@ public class AppConfig {
     
 
     public static final String LOGGING_LEVEL = "logging_level";
+    public static final String MONGO_CONNECT_STRING = "mongo_connect";
+    public static final String MONGO_DB_STRING = "mongo_db";
     public static final String WEB_SERVER_IP = "web_server_ip";
     public static final String WEB_SERVER_PORT = "web_server_port";
     public static final String NUMBER_OF_THREADS_PARAM = "numberOfThreads";
@@ -85,6 +87,28 @@ public class AppConfig {
                                   serverIp);
         }
         return serverIp;
+    }
+
+
+    public String getMongoConnect() {
+        String mongoConnect = this.getProperty(AppConfig.MONGO_CONNECT_STRING);
+        if( mongoConnect == null || mongoConnect.length() < 1 ) {
+            AppConfig.LOGGER.warning(AppConfig.MONGO_CONNECT_STRING + 
+                                  " was not defined, database will not be available. Please check your property settings for the value of: " + 
+                                  AppConfig.MONGO_CONNECT_STRING);
+        }
+        return mongoConnect;
+    }
+
+
+    public String getMongoDBName() {
+        String mongoDBName = this.getProperty(AppConfig.MONGO_DB_STRING);
+        if( mongoDBName == null || mongoDBName.length() < 1 ) {
+            AppConfig.LOGGER.warning(AppConfig.MONGO_DB_STRING + 
+                                  " was not defined, database will not be available. Please check your property settings for the value of: " + 
+                                  AppConfig.MONGO_DB_STRING);
+        }
+        return mongoDBName;
     }
 
 
