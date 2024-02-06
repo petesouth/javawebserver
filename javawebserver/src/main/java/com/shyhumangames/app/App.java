@@ -4,6 +4,9 @@ package com.shyhumangames.app;
 import java.util.logging.Logger;
 
 import com.shyhumangames.app.javawebserver.configuration.AppConfig;
+import com.shyhumangames.app.javawebserver.routes.ticket.GetTicketsHandler;
+import com.shyhumangames.app.javawebserver.routes.phones.GetPhonesHandler;
+import com.shyhumangames.app.javawebserver.routes.players.GetPlayersHandler;
 import com.shyhumangames.app.javawebserver.server.WebServer;
 
 /**
@@ -24,7 +27,9 @@ public class App
             WebServer webServer = new WebServer(server_ip, server_port, numberOfThreads); 
             
             // TODO: SET UP WHATEVER ROUTES: 
-            // webServer.addRoute(String path, HttpHandlerExt handler);
+            webServer.addRoute("/tickets/${id}", new GetTicketsHandler());
+            webServer.addRoute("/players/${id}", new GetPlayersHandler());
+            webServer.addRoute("/players/${id}/phones", new GetPhonesHandler());
 
             webServer.run();
     

@@ -208,6 +208,11 @@ public class WebServer {
         }
     }
 
+    /**
+     * This is just done to pulse heart beat ok the server.  
+     * 
+     *  http://blahblah/test     Show if server is running.
+     */
     static class TestHandler implements HttpHandlerExt {
 
         @Override
