@@ -2,7 +2,10 @@
 # JavaWebServer
 ### Example of a simple multithreaded router server in Java.  
 
-Brief description of what the project does.
+Home Grown Router type server.  Lets you map routes into HttpHandlers.  
+Configuration of thread pool.
+Leverages Mongo running in a docker as the storage.
+All server params are configurable via javawebserver.properties described bellow.
 
 ## Setup
 
