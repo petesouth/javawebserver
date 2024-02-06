@@ -1,6 +1,8 @@
 package com.shyhumangames.app.javawebserver.server;
 
 import java.util.logging.Logger;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -63,8 +65,8 @@ public class WebServer {
             this.server.setExecutor(this.executorService);
 
             // Define contexts and handlers
-            this.server.createContext("/test", new TestHandler());
-
+            this.server.createContext("/", new RouterHandler());
+            
             // Add shutdown hook to handle CTRL-C or other interrupt signals.
             this.setupShutdownServerHooks();
 
@@ -112,10 +114,42 @@ public class WebServer {
         }));
     }
 
-    static class TestHandler implements HttpHandler {
+    static class RouterHandler implements HttpHandler {
+        public Map<String, HttpHandler> routeMap = new LinkedHashMap<String, HttpHandler>();
+
+        RouterHandler() {
+            this.routeMap.put("/test", new TestHandler());
+        }
+
         @Override
         public void handle(HttpExchange exchange) throws IOException {
-            String response = "This is the response";
+            String path = exchange.getRequestURI().getPath();
+            HttpHandler handler = this.routeMap.get(path);
+            if( handler != null) {
+                handler.handle(exchange);
+            } else {
+                // If yes, handle the request as before
+                String response = "{ \"status\": 404, \"message\": \"Not Found\" }";
+                exchange.getResponseHeaders().set("Content-Type", "application/json");
+                exchange.sendResponseHeaders(404, response.length());
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(response.getBytes());
+                    os.close();
+                } catch (Throwable e) {
+                    WebServer.LOGGER.warning("Error path not found:" + path + " :" + e.getMessage());
+                }
+                
+            }  
+            
+        }
+    }
+
+    static class TestHandler implements HttpHandler {
+        
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            String response = "{ \"status\": 200, \"message\": \"The Server is up and running\" }";
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
             exchange.sendResponseHeaders(200, response.length());
             OutputStream os = exchange.getResponseBody();
             os.write(response.getBytes());
