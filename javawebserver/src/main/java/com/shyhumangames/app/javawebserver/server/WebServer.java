@@ -15,7 +15,7 @@ import java.io.OutputStream;
 import java.io.IOException;
 
 import com.shyhumangames.app.javawebserver.configuration.AppConfig;
-
+import com.shyhumangames.app.javawebserver.server.HttpHandlerExt;
 
 public class WebServer {
 
@@ -53,17 +53,23 @@ public class WebServer {
         this.numberOfThreads = numberOfThreads;
     }
 
-    public Map<String, HttpHandler> getRouterHandlerMap() {
+    public Map<String, HttpHandlerExt> getRouterHandlerMap() {
         return this.roterHandler.routeMap;
     }
 
     public void run() {
         try {
             
+
             // Initialize the HTTP server
             InetSocketAddress address = new InetSocketAddress(this.server_ip, this.server_port);
             this.server = HttpServer.create(address, 0);
             
+            this.getRouterHandlerMap().forEach((String key, HttpHandlerExt handler)->{
+                WebServer.LOGGER.info("Initializing down: " + key);
+                handler.init();
+            });
+
             // Setup the thread pool
             this.executorService = Executors.newFixedThreadPool(this.numberOfThreads);
             this.server.setExecutor(this.executorService);
@@ -95,7 +101,12 @@ public class WebServer {
      */
     private void setupShutdownServerHooks() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            WebServer.LOGGER.info("Shutdown hook running. Cleaning up resources...");
+            this.shutDown();
+        }));
+    }
+
+    public void shutDown() {
+        WebServer.LOGGER.info("Shutdown hook running. Cleaning up resources...");
             server.stop(0);
             this.running = false;
             if (!executorService.isShutdown()) {
@@ -115,11 +126,15 @@ public class WebServer {
                     Thread.currentThread().interrupt();
                 }
             }
-        }));
+
+            this.getRouterHandlerMap().forEach((String key, HttpHandlerExt handler)->{
+                WebServer.LOGGER.info("Shutting down: " + key);
+                handler.shutdown();
+            });
     }
 
     static class RouterHandler implements HttpHandler {
-        public Map<String, HttpHandler> routeMap = new LinkedHashMap<String, HttpHandler>();
+        public Map<String, HttpHandlerExt> routeMap = new LinkedHashMap<String, HttpHandlerExt>();
 
         RouterHandler() {
             this.routeMap.put("/test", new TestHandler());
@@ -148,7 +163,7 @@ public class WebServer {
         }
     }
 
-    static class TestHandler implements HttpHandler {
+    static class TestHandler implements HttpHandlerExt {
         
         @Override
         public void handle(HttpExchange exchange) throws IOException {
@@ -158,6 +173,16 @@ public class WebServer {
             OutputStream os = exchange.getResponseBody();
             os.write(response.getBytes());
             os.close();
+        }
+
+        @Override
+        public void init() {
+        
+        }
+
+        @Override
+        public void shutdown() {
+        
         }
     }
 }
