@@ -1,5 +1,6 @@
 
-# JavaWebServer - Example of a simple Router Server in Java.  
+# JavaWebServer
+### Example of a simple multithreaded router server in Java.  
 
 Brief description of what the project does.
 
@@ -57,4 +58,4 @@ The server supports the following endpoints:
 
 Guidelines for how to contribute to the project.
 
-## TODO:  Add middleware - thins like Token Support method logging, etc.
+### TODO:  Add middleware - things like Token Support method logging, etc.
