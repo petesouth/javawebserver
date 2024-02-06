@@ -167,9 +167,6 @@ public class WebServer {
                 try {
                     // Get the handler associated with the matched pattern
                     HttpHandlerExt handler = matchedEntry.get().getValue();
-                    // Get the Matcher for extracting path parameters if needed
-                    Matcher matcher = matchedEntry.get().getKey().matcher(path);
-                    matcher.matches(); // This is required to prepare the matcher to extract groups
                     handler.handle(exchange); // Handle the request
                 } catch (Throwable e) {
                     handleException(path, exchange, e);
